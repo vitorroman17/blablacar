@@ -1,18 +1,21 @@
+package domain.entities;
+
 public class Usuario {
     private String nome;
     private String email;
-    private final String senha;
+    private String senha;
     private String telefone;
     private String endereco;
+    Passageiro passageiro;
+    Motorista motorista;
 
 
-    public Usuario(String nome, String email, String senha, String telefone, String endereco, double avaliacao) {
+    public Usuario(String nome, String email, String senha, String telefone, String endereco) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
         this.telefone = telefone;
         this.endereco = endereco;
-        this.avaliacao = avaliacao;
     }
 
     public String getNome() {
@@ -26,9 +29,6 @@ public class Usuario {
     }
     public String getEndereco() {
         return endereco;
-    }
-    public double getAvaliacao() {
-        return avaliacao;
     }
 
     public void setNome(String nome) {
@@ -45,5 +45,27 @@ public class Usuario {
 
     public void setEndereco(String endereco) {
         this.endereco = endereco;
+    }
+    public void setSenha(String senhaAntiga, String novaSenha) {
+        if (this.senha.equals(senhaAntiga)) {
+            this.senha = novaSenha;
+        } else {
+            System.out.println("Senha antiga incorreta.");
+        }
+    }
+    public String getSenha() {
+        return senha;
+    }
+    public Motorista getMotorista() {
+        return motorista;
+    }
+    public Passageiro getPassageiro() {
+        return passageiro;
+    }
+    public void setMotorista(String cnh) {
+        this.motorista = new Motorista(cnh);
+    }
+    public void setPassageiro() {
+        passageiro = new Passageiro();
     }
 }

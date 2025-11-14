@@ -1,8 +1,15 @@
-public class Passageiro extends Usuario {
-    private int numeroDeViagens;
+package domain.entities;
 
-    public Passageiro(String nome, String email, String senha, String telefone, String endereco, double avaliacao, int numeroDeViagens) {
-        super(nome, email, senha, telefone, endereco, avaliacao);
+import java.util.ArrayList;
+import java.util.List;
+
+public class Passageiro {
+    private int numeroDeViagens;
+    private final List<Viagem> viagens;
+
+    public Passageiro() {
+        this.numeroDeViagens = 0;
+        this.viagens = new ArrayList<>();
     }
     
     public int getNumeroDeViagens() {
@@ -12,7 +19,10 @@ public class Passageiro extends Usuario {
     public void addViagem() {
         this.numeroDeViagens ++;
     }
-
-
-    
+    public List<Viagem> getViagens() {
+        return viagens;
+    }
+    public void addViagem(Viagem viagem) {
+        this.viagens.add(viagem);
+    }
 }
