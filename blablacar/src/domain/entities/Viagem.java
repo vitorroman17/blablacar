@@ -13,6 +13,7 @@ public class Viagem {
     private  double preco;
     private  String data;
     private  int vagas;
+    private List<String> status;
     private int lugaresOcupados;
     private double avaliacao = 0;
     int somaNotas = 0;
