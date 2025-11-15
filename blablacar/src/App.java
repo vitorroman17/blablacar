@@ -1,3 +1,4 @@
+import domain.entities.PassageiroViagem;
 import domain.entities.Usuario;
 import domain.entities.Veiculo;
 import domain.entities.Viagem;
@@ -18,7 +19,6 @@ public class App {
     private static final ViagemRepository viagemRepo = new ViagemRepository();
     private static List<Viagem> resultados = null;
     private static Veiculo veiculoSelecionado = null;
-
 
     public static void main(String[] args) {
 
@@ -208,7 +208,7 @@ public class App {
         mostrarVeiculos();
         System.out.print("Informe o ID do veículo: ");
         int idVeiculo = scanner.nextInt();
-        scanner.nextLine(); 
+        scanner.nextLine();
 
         for (Veiculo v : usuarioLogado.getMotorista().getVeiculos()) {
             if (v.getId() == idVeiculo) {
@@ -255,10 +255,10 @@ public class App {
         String destino = scanner.nextLine();
 
         System.out.print("Data (dd/MM/yyyy) [Enter para qualquer data]: ");
-        String data = scanner.nextLine();   
-        if(data.isEmpty()) {
+        String data = scanner.nextLine();
+        if (data.isEmpty()) {
             resultados = viagemRepo.listarViagensPorOrigemDestino(origem, destino);
-        }else {
+        } else {
             resultados = viagemRepo.listarViagensPorOrigemDestinoData(origem, destino, data);
         }
 
@@ -272,7 +272,7 @@ public class App {
         }
 
         for (Viagem v : resultados) {
-            if (v.getStatus() == "PENDENTE") {
+            if (v.getStatus().equals(v.getStatus())) {
                 System.out.println(" ID: " + v.getId());
                 System.out.println("   De: " + v.getCidadeOrigem() + " → Para: " + v.getCidadeDestino());
                 System.out.println("   Motorista: " + v.getMotorista().getNome());
@@ -323,13 +323,12 @@ public class App {
         System.out.println("\n\t┌─────────────────────────────────────┐");
         System.out.println("\t│      MINHAS CARONAS OFERTADAS       │");
         System.out.println("\t└─────────────────────────────────────┘");
-        scanner.nextLine(); 
+        scanner.nextLine();
 
-        
         System.out.println("\n  Caronas Ativas:");
         System.out.println("─────────────────────────────────────────────────────");
         for (Viagem v : viagemRepo.listarViagensPorMotorista(usuarioLogado)) {
-            if (v.getStatus() == "PENDENTE") {
+            if (v.getStatus().equals(v.getStatus())) {
                 System.out.println("\n ID: " + v.getId());
                 System.out.println(" De " + v.getCidadeOrigem() + " para " + v.getCidadeDestino());
                 System.out.println(" Passageiros: " + v.getPassageiros().size() + "/" + v.getVagas());
@@ -340,7 +339,11 @@ public class App {
         }
         System.out.println("Digite o ID da viagem ou 0 para voltar): ");
         int idViagem = scanner.nextInt();
-        
+
+        if (idViagem == 0) {
+            return;
+        }
+
         Viagem viagemSelecionada = viagemRepo.getViagemPorId(idViagem);
         if (viagemSelecionada == null) {
             System.out.println("\n Viagem não encontrada.");
@@ -349,8 +352,7 @@ public class App {
         }
         System.out.println("\nOpções:");
         System.out.println("2. Alterar lugares da carona");
-        System.out.println("3. Iniciar viagem");
-        System.out.println("4. Concluir viagem");
+        System.out.println("3. Concluir viagem");
         System.out.println("0. Voltar");
 
         System.out.print("\nEscolha: ");
@@ -361,29 +363,36 @@ public class App {
                 scanner.nextLine();
                 System.out.print("Quantos lugares deseja liberar? ");
                 int lugares = scanner.nextInt();
-                if (viagemSelecionada.getVagas() + lugares > viagemSelecionada.getVagas()) {
-                    System.out.println("\n Não é possível liberar mais lugares do que o total disponível.");
+
+                if (lugares <= 0) {
+                    System.out.println("\n Quantidade inválida de lugares.");
                     pausar();
                     return;
-                    
                 }
+
+                int ocupados = viagemSelecionada.getTotalPessoas();
+                if (lugares > ocupados) {
+                    System.out.println("\n Não é possível liberar mais lugares do que o total de pessoas já reservadas (" + ocupados + ").");
+                    pausar();
+                    return;
+                }
+
                 viagemSelecionada.aumentarLugaresDisponiveis(lugares);
-                System.out.println("\n Carona cancelada!");
+                System.out.println("\n Lugares liberados com sucesso!");
                 pausar();
             }
             case 3 -> {
-                viagemSelecionada.alterarStatus("EM ANDAMENTO");
-                System.out.println("\n Viagem iniciada!");
-                pausar();
-            }
-            case 4 -> {
-                viagemSelecionada.alterarStatus("CONCLUIDA");
+                viagemSelecionada.alterarStatus(viagemSelecionada.getStatus());
                 System.out.println("\n Viagem concluída!");
                 pausar();
             }
             case 0 -> {
+                // voltar
             }
-            default -> System.out.println("\n Opção inválida!");
+            default -> {
+                System.out.println("\n Opção inválida!");
+                pausar();
+            }
         }
     }
 
@@ -417,28 +426,72 @@ public class App {
         System.out.print("Selecione uma reserva (ID da viagem): ");
         int idViagem = scanner.nextInt();
 
+        Viagem viagem = viagemRepo.getViagemPorId(idViagem);
+
+        if (viagem == null) {
+            System.out.println("\n Viagem não encontrada.");
+            pausar();
+            return;
+        }
+
         System.out.println("\n─────────────────────────────────────────────────────");
         System.out.println("\nOpções:");
-        System.out.println("1. Cancelar reserva");
-        System.out.println("2. Avaliar carona (após conclusão)");
+        System.out.println("1. Alterar carona");
+        System.out.println("2. Cancelar reserva");
+        System.out.println("3. Avaliar carona (após conclusão)");
         System.out.println("0. Voltar");
 
         System.out.print("\nEscolha: ");
         int opcao = scanner.nextInt();
 
-        if (opcao == 2) {
-            System.out.print("Quantas pessoas deseja cancelar? ");
-            int pessoas = scanner.nextInt();
-            scanner.nextLine();
-            System.out.print("Tem certeza que deseja cancelar esta reserva? (S/N): ");
-            String resposta = scanner.nextLine();
-            if (resposta.equalsIgnoreCase("S")) {
-                viagemRepo.cancelarReserva(idViagem, usuarioLogado, pessoas);
-                System.out.println("\n Reserva cancelada!");
+        switch (opcao) {
+            case 1 -> {
+                System.out.print("Quantas pessoas deseja alterar na reserva? ");
+                int novasPessoas = scanner.nextInt();
+
+                int pessoasAtuais = viagem.getTotalPessoasDoPassageiro(usuarioLogado);
+                if (novasPessoas > pessoasAtuais) {
+                    int adicionais = novasPessoas - pessoasAtuais;
+                    try {
+                        viagem.adicionarPassageiro(usuarioLogado, adicionais);
+                        System.out.println("\n Reserva atualizada com sucesso!");
+                    } catch (Exception e) {
+                        System.out.println("\n Não foi possível adicionar mais pessoas: " + e.getMessage());
+                    }
+                } else if (novasPessoas < pessoasAtuais) {
+                    int reduzir = pessoasAtuais - novasPessoas;
+                    try {
+                        viagem.removerPassageiro(usuarioLogado, reduzir);
+                        System.out.println("\n Reserva atualizada com sucesso!");
+                    } catch (Exception e) {
+                        System.out.println("\n Não foi possível reduzir o número de pessoas: " + e.getMessage());
+                    }
+                } else {
+                    System.out.println("\n O número de pessoas permanece o mesmo.");
+                }
+                scanner.nextLine();
                 pausar();
             }
-        } else if (opcao == 2) {
-            avaliarCarona(idViagem);
+            case 2 -> {
+                int pessoasReservadas = viagem.getTotalPessoasDoPassageiro(usuarioLogado);
+                boolean cancelada = viagemRepo.cancelarReserva(idViagem, usuarioLogado, pessoasReservadas);
+                if (cancelada) {
+                    System.out.println("\n Reserva cancelada com sucesso!");
+                } else {
+                    System.out.println("\n Não foi possível cancelar a reserva.");
+                }
+                pausar();
+            }
+            case 3 -> {
+                avaliarCarona(idViagem);
+            }
+            case 0 -> {
+                // apenas voltar
+            }
+            default -> {
+                System.out.println("\n Opção inválida!");
+                pausar();
+            }
         }
     }
 
@@ -551,10 +604,9 @@ public class App {
         scanner.nextLine();
         int contagemViagens;
 
-
         System.out.println("\n  RESUMO GERAL - " + usuarioLogado.getNome());
         System.out.println("═════════════════════════════════════════════════════");
-        
+
         if (!(usuarioLogado.getMotorista() == null)) {
             System.out.println("\n  COMO MOTORISTA:");
             System.out.printf("   Total de caronas oferecidas: %d", usuarioLogado.getMotorista().getNumeroDeViagens());
@@ -569,10 +621,10 @@ public class App {
             double receitaTotal = viagemRepo.calcularReceitaTotalPorMotorista(usuarioLogado);
             System.out.println("   Receita total: R$ " + receitaTotal);
         }
-        
-        if(!(usuarioLogado.getPassageiro() == null)) {
+
+        if (!(usuarioLogado.getPassageiro() == null)) {
             System.out.println("\n  COMO PASSAGEIRO:");
-            System.out.println("   Total de caronas: "+ usuarioLogado.getPassageiro().getNumeroDeViagens());
+            System.out.println("   Total de caronas: " + usuarioLogado.getPassageiro().getNumeroDeViagens());
             contagemViagens = listarViagemPassageiro("CONCLUIDA");
             System.out.println("   Caronas concluídas: " + contagemViagens);
             contagemViagens = listarViagemPassageiro("CANCELADA");
@@ -658,13 +710,15 @@ public class App {
     }
 
     public static boolean verificarVeiculo() {
-        if (verificarMotorista()) {
-            return true;
-        }if (!usuarioLogado.getMotorista().getVeiculos().isEmpty()) {
+        if (usuarioLogado.getMotorista() == null) {
+            System.out.println("\n É necessário ser motorista para cadastrar ou utilizar veículos.");
+            return false;
+        }
+
+        if (!usuarioLogado.getMotorista().getVeiculos().isEmpty()) {
             return true;
         }
 
-        scanner.nextLine();
         System.out.println("\nVocê ainda não tem nenhum veículo cadastrado!");
         System.out.print("Gostaria de cadastrar um veículo agora? (S/N): ");
         String resposta = scanner.nextLine();
@@ -677,8 +731,6 @@ public class App {
     }
 
     public static Veiculo cadastrarVeiculo() {
-        scanner.nextLine(); 
-
         System.out.print("Marca: ");
         String marca = scanner.nextLine();
 
@@ -699,22 +751,26 @@ public class App {
 
         usuarioLogado.getMotorista().addVeiculo(veiculoAcionado);
 
-    return veiculoAcionado;
+        return veiculoAcionado;
     }
-    public static int  listarViagemMotorista(String status) {
+
+    public static int listarViagemMotorista(String status) {
         int contagemViagens = 0;
-        for(Viagem v : viagemRepo.listarViagensPorMotorista(usuarioLogado)) {
-            if(v.getStatus().equals(status)) {
+        for (Viagem v : viagemRepo.listarViagensPorMotorista(usuarioLogado)) {
+            if (v.getStatus().equals(status)) {
                 contagemViagens++;
             }
         }
         return contagemViagens;
     }
+
     public static int listarViagemPassageiro(String status) {
         int contagemViagens = 0;
-        for(Viagem v : viagemRepo.listarViagensPorPassageiro(usuarioLogado)) {
-            if(v.getStatus().equals(status)) {
-                contagemViagens++;
+        for (Viagem viagem : viagemRepo.listarViagensPorPassageiro(usuarioLogado)) {
+            for (PassageiroViagem pv : viagem.getPassageiros()) {
+                if (pv.getPassageiro().equals(usuarioLogado) && viagem.getStatus().equals(status)) {
+                    contagemViagens++;
+                }
             }
         }
         return contagemViagens;

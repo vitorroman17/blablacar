@@ -2,7 +2,7 @@ package domain.entities;
 
 import java.util.ArrayList;
 import java.util.List;
-import domain.enuns.StatusVIagem;
+import domain.enuns.StatusViagem;
 
 public class Viagem {
     private static int proximoId = 1;
@@ -20,6 +20,7 @@ public class Viagem {
     private double avaliacao = 0;
     private double somaNotas = 0;
     private int totalAvaliacoes;
+    private int total = 0;
     
 
     public Viagem(Veiculo veiculo, Usuario motorista, String cidadeOrigem, String cidadeDestino, double preco, String data, int vagas) {
@@ -32,7 +33,7 @@ public class Viagem {
         this.data = data;
         this.vagas = vagas;
         this.id = proximoId++;
-        status = StatusVIagem.PENDENTE;
+        status = StatusViagem.PENDENTE;
     }
     
      public Veiculo getVeiculo() {
@@ -98,8 +99,11 @@ public class Viagem {
         return status;
     }
     public void alterarStatus(String novoStatus) {
-        if ((!novoStatus.equals(StatusVIagem.PENDENTE) &&
-                !novoStatus.equals(StatusVIagem.CONCLUIDA))) {
+        if ((!novoStatus.equals(StatusViagem.PENDENTE) &&
+                !novoStatus.equals(StatusViagem.CONCLUIDA)
+                && !novoStatus.equals(StatusViagem.INICIADA)
+                && !novoStatus.equals(StatusViagem.CHEIA))
+                ) {
             throw new IllegalArgumentException("Status inválido para a viagem.");
         }
         this.status = novoStatus;
@@ -115,7 +119,6 @@ public class Viagem {
     }
 
     public int getTotalPessoas() {
-        int total = 0;
         for (PassageiroViagem pv : passageiros) {
             total += pv.getNumeroDeLugares();
         }
@@ -125,9 +128,12 @@ public class Viagem {
     public int getVagas() {
         return vagas - getTotalPessoas();
     }
-    
+
     public void aumentarLugaresDisponiveis(int lugares) {
         this.lugaresOcupados -= lugares;
+    }
+    public int getLugaresOcupados() {
+        return lugaresOcupados;
     }
 
 }

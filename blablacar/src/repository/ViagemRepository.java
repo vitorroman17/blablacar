@@ -3,6 +3,8 @@ package repository;
 import domain.entities.PassageiroViagem;
 import domain.entities.Usuario;
 import domain.entities.Viagem;
+import domain.enuns.StatusViagem;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,6 +56,10 @@ public class ViagemRepository {
         for (Viagem viagem : viagens) {
             if (viagem.getId() == id) {
                 viagem.adicionarPassageiro(passageiro, pessoas);
+                if (viagem.getLugaresOcupados() == viagem.getVagas()) {
+                    viagem.alterarStatus(StatusViagem.CHEIA);
+                    
+                }
                 return viagem;
             }
         }
