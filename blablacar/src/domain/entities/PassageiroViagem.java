@@ -26,6 +26,7 @@ public class PassageiroViagem {
     public void setStatus(String status) {
         this.status = status;
     }
+    
     public void alterarStatus(String novoStatus) {
         if ((!novoStatus.equals(StatusParticipacao.RESERVADO) &&
                 !novoStatus.equals(StatusParticipacao.CANCELADO) &&

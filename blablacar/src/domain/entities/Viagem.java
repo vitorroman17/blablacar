@@ -91,9 +91,6 @@ public class Viagem {
     public String getData() {
         return data;
     }
-    public int getVagas() {
-        return vagas - lugaresOcupados;
-    }
     public int getId() {
         return id;
     }
@@ -107,4 +104,26 @@ public class Viagem {
         }
         this.status = novoStatus;
     }
+    public int getTotalPessoasDoPassageiro(Usuario passageiro) {
+        int total = 0;
+        for (PassageiroViagem pv : passageiros) {
+            if (pv.getPassageiro().equals(passageiro)) {
+                total += pv.getNumeroDeLugares();
+            }
+        }
+        return total;
+    }
+
+    public int getTotalPessoas() {
+        int total = 0;
+        for (PassageiroViagem pv : passageiros) {
+            total += pv.getNumeroDeLugares();
+        }
+        return total;
+    }
+
+    public int getVagas() {
+        return vagas - getTotalPessoas();
+    }
+
 }

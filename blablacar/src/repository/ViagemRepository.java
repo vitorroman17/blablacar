@@ -20,8 +20,16 @@ public class ViagemRepository {
         return viagens;
     }
 
+    public Viagem getViagemPorId(int id) {
+        for (Viagem viagem : viagens) {
+            if (viagem.getId() == id) {
+                return viagem;
+            }
+        }
+        return null;
+    }
     
-    public List<Viagem> ListarViagensPorOrigemDestino(String origem, String destino, String data) {
+    public List<Viagem> ListarViagensPorOrigemDestinoData(String origem, String destino, String data) {
         List<Viagem> viagensFiltradas = new ArrayList<>();
         for (Viagem viagem : viagens) {
             if (viagem.getCidadeOrigem().equalsIgnoreCase(origem)
@@ -32,7 +40,16 @@ public class ViagemRepository {
         }
         return viagensFiltradas;
     }
-
+    public List<Viagem> ListarViagensPorOrigemDestino(String origem, String destino) {
+        List<Viagem> viagensFiltradas = new ArrayList<>();
+        for (Viagem viagem : viagens) {
+            if (viagem.getCidadeOrigem().equalsIgnoreCase(origem)
+                    && viagem.getCidadeDestino().equalsIgnoreCase(destino)) {
+                viagensFiltradas.add(viagem);
+            }
+        }
+        return viagensFiltradas;
+    }
     
     public Viagem reservarViagemPorId(int id, int pessoas, Usuario passageiro) {
         for (Viagem viagem : viagens) {
@@ -65,16 +82,19 @@ public class ViagemRepository {
     }
     
     public List<Viagem> ListarViagensPorPassageiro(Usuario passageiro) {
-        viagensFiltradas = new ArrayList<>();
+
         for (Viagem viagem : viagens) {
             for (PassageiroViagem pv : viagem.getPassageiros()) {
                 if (pv.getPassageiro().equals(passageiro)) {
                     viagensFiltradas.add(viagem);
+                    break;
                 }
             }
         }
         return viagensFiltradas;
     }
+
+
     public List<Viagem> ListarViagensPorMotorista(Usuario motorista) {
         List<Viagem> viagensFiltradas = new ArrayList<>();
         for (Viagem viagem : viagens) {
@@ -87,10 +107,13 @@ public class ViagemRepository {
     
     public int contarPassageirosPorMotorista(Usuario motorista) {
         int totalPassageiros = 0;
-        for (Viagem viagem : viagens) {
-
+       for (Viagem viagem : viagens) {
             if (viagem.getMotorista().equals(motorista)) {
-                totalPassageiros += viagem.getPassageiros().size();
+                for (PassageiroViagem pv : viagem.getPassageiros()) {
+                    if (pv.getStatus() == "CONCLUIDO") {
+                        totalPassageiros += pv.getNumeroDeLugares();
+                    }
+                }
             }
         }
         return totalPassageiros;
@@ -103,5 +126,5 @@ public class ViagemRepository {
             }
         }
         return receitaTotal;
-    }
+    }    
 }
