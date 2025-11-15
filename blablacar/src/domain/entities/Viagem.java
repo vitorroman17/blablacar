@@ -2,22 +2,24 @@ package domain.entities;
 
 import java.util.ArrayList;
 import java.util.List;
+import domain.enuns.StatusVIagem;
 
 public class Viagem {
-    private int id = 0;
+    private static int proximoId = 1;
+    private int id = 0  ;
     private  Veiculo veiculo;
-    private  List<Usuario> passageiros;
+    private  List<PassageiroViagem> passageiros;
     private  Usuario motorista;
     private  String cidadeOrigem;
     private  String cidadeDestino;
     private  double preco;
     private  String data;
     private  int vagas;
-    private List<String> status;
+    private String status;
     private int lugaresOcupados;
     private double avaliacao = 0;
-    int somaNotas = 0;
-    int totalAvaliacoes;
+    private double somaNotas = 0;
+    private int totalAvaliacoes;
     
 
     public Viagem(Veiculo veiculo, Usuario motorista, String cidadeOrigem, String cidadeDestino, double preco, String data, int vagas) {
@@ -29,13 +31,15 @@ public class Viagem {
         this.passageiros = new ArrayList<>();
         this.data = data;
         this.vagas = vagas;
+        this.id = proximoId++;
+        status = StatusVIagem.PENDENTE;
     }
     
      public Veiculo getVeiculo() {
         return veiculo;
     }
 
-    public List<Usuario> getPassageiros() {
+    public List<PassageiroViagem> getPassageiros() {
         return passageiros;
     }
 
@@ -71,13 +75,14 @@ public class Viagem {
         }else if (pessoas > vagas - lugaresOcupados) {
             throw new IllegalStateException("Não há vagas suficientes. Disponíveis: " + (vagas - lugaresOcupados));
         }else{
-            passageiros.add(passageiro);
+            PassageiroViagem pv = new PassageiroViagem(passageiro, pessoas);
+            passageiros.add(pv);
             lugaresOcupados += pessoas;
         }
     }
     public void removerPassageiro(Usuario passageiro, int pessoas) {
-        if (passageiros.contains(passageiro)) {
-            passageiros.remove(passageiro);
+        if (passageiros.stream().anyMatch(pv -> pv.getPassageiro().equals(passageiro))) {
+            passageiros.removeIf(pv -> pv.getPassageiro().equals(passageiro));
             lugaresOcupados -= pessoas;
         } else {
             throw new IllegalArgumentException("Passageiro não encontrado na viagem.");
@@ -87,9 +92,19 @@ public class Viagem {
         return data;
     }
     public int getVagas() {
-        return vagas - passageiros.size();
+        return vagas - lugaresOcupados;
     }
     public int getId() {
         return id;
+    }
+    public String getStatus() {
+        return status;
+    }
+    public void alterarStatus(String novoStatus) {
+        if ((!novoStatus.equals(StatusVIagem.PENDENTE) &&
+                !novoStatus.equals(StatusVIagem.CONCLUIDA))) {
+            throw new IllegalArgumentException("Status inválido para a viagem.");
+        }
+        this.status = novoStatus;
     }
 }

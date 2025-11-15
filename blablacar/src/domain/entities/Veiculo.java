@@ -1,6 +1,8 @@
 package domain.entities;
 
 public class Veiculo {
+    private static int proximoId = 1;
+
     private int id = 0;
     private final String marca;
     private final String modelo;
@@ -14,7 +16,7 @@ public class Veiculo {
         this.placa = placa;
         this.ano = ano;
         this.cor = cor;
-        this.id ++;
+        this.id = proximoId++;
     }
     public String getMarca() {
         return marca;

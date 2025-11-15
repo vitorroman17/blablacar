@@ -1,22 +1,26 @@
 import domain.entities.Usuario;
 import domain.entities.Veiculo;
 import domain.entities.Viagem;
+
+import java.util.List;
 import java.util.Scanner;
+
 import repository.UsuarioRepository;
 import repository.ViagemRepository;
 
 public class App {
+
     private static final Scanner scanner = new Scanner(System.in);
-    private static  Usuario usuarioLogado = null;
-    private static  Viagem viagemAtual = null;
+    private static Usuario usuarioLogado = null;
+    private static Viagem viagemAtual = null;
     private static Veiculo veiculoAcionado = null;
     private static final UsuarioRepository usuarioRepo = new UsuarioRepository();
     private static final ViagemRepository viagemRepo = new ViagemRepository();
-    
 
     public static void main(String[] args) {
+
         exibirBanner();
-        
+
         while (true) {
             if (usuarioLogado == null) {
                 menuInicial();
@@ -58,12 +62,11 @@ public class App {
         }
     }
 
-
     private static void menuPrincipal() {
         System.out.println("\n╔═══════════════════════════════════════════════════╗");
         System.out.println("║  Bem-vindo(a), " + usuarioLogado.getNome() + "! ");
         System.out.println("╚═══════════════════════════════════════════════════╝");
-        
+
         System.out.println("\n┌─────────────────────────────────────┐");
         System.out.println("│         MENU PRINCIPAL              │");
         System.out.println("├─────────────────────────────────────┤");
@@ -103,28 +106,27 @@ public class App {
             case 10 -> relatorioCompleto();
             case 11 -> fazerLogout();
             case 0 -> sair();
-            default -> System.out.println("\n❌ Opção inválida! Tente novamente.");
+            default -> System.out.println("\n Opção inválida! Tente novamente.");
         }
     }
-
 
     private static void fazerLogin() {
         System.out.println("\n┌─────────────────────────────────────┐");
         System.out.println("│           FAZER LOGIN               │");
         System.out.println("└─────────────────────────────────────┘");
-        scanner.nextLine();
+        scanner.nextLine(); // limpa \n do menu
         System.out.print("E-mail: ");
         String email = scanner.nextLine();
-        
+
         System.out.print("Senha: ");
         String senha = scanner.nextLine();
-        
+
         usuarioLogado = usuarioRepo.Login(email, senha);
         if (usuarioLogado != null) {
-            System.out.println("\n✅ Login realizado com sucesso!");
+            System.out.println("\n Login realizado com sucesso!");
             pausar();
         } else {
-            System.out.println("\n❌ E-mail ou senha incorretos!");
+            System.out.println("\n E-mail ou senha incorretos!");
             pausar();
         }
     }
@@ -133,35 +135,35 @@ public class App {
         System.out.println("\n┌─────────────────────────────────────┐");
         System.out.println("│          CRIAR NOVA CONTA           │");
         System.out.println("└─────────────────────────────────────┘");
-        scanner.nextLine();
+        scanner.nextLine(); // limpa \n do menu
         System.out.print("Nome completo: ");
         String nome = scanner.nextLine();
-        
+
         System.out.print("E-mail: ");
         String email = scanner.nextLine();
-        
+
         System.out.print("Telefone (com DDD): ");
         String telefone = scanner.nextLine();
-        
+
         System.out.print("Qual o seu endereço? ");
         String endereco = scanner.nextLine();
 
         System.out.print("Senha (mínimo 6 caracteres): ");
         String senha = scanner.nextLine();
+
         try {
             usuarioLogado = new Usuario(nome, email, senha, telefone, endereco);
             usuarioRepo.addUsuario(usuarioLogado);
             usuarioRepo.getUsuarios();
-
-            
         } catch (Exception e) {
+            usuarioLogado = null;
         }
-        
+
         if (usuarioLogado != null) {
-            System.out.println("\n✅ Conta criada com sucesso!");
+            System.out.println("\n Conta criada com sucesso!");
             pausar();
-        }else {
-            System.out.println("\n❌ Falha ao criar conta. Tente novamente.");
+        } else {
+            System.out.println("\n Falha ao criar conta. Tente novamente.");
             pausar();
         }
     }
@@ -169,84 +171,124 @@ public class App {
     private static void fazerLogout() {
         System.out.println("\n👋 Até logo, " + usuarioLogado.getNome() + "!");
         usuarioLogado = null;
+        viagemAtual = null;
+        veiculoAcionado = null;
     }
 
     private static void ofertarCarona() {
-        pausar();
-        if (verificarMotorista()) {
-            System.out.println("\n┌─────────────────────────────────────┐");
-            System.out.println("│        OFERTAR NOVA CARONA          │");
-            System.out.println("└─────────────────────────────────────┘");
-            
-            
-            System.out.println("\n📍 ORIGEM");
-            System.out.print("Cidade de origem: ");
-            String cidadeOrigem = scanner.nextLine();
-            
-            System.out.println("\n📍 DESTINO");
-            System.out.print("Cidade de destino: ");
-            String cidadeDestino = scanner.nextLine();
-            
-            System.out.println("\n🕐 Data");
-            System.out.print("Data da viagem (dd/MM/yyyy): ");
-            String data = scanner.nextLine();
+        // chamado logo após um nextInt do menu
+        scanner.nextLine(); // limpa \n pendente
 
-            mostrarVeiculos();
-            System.out.println("Qual o id do seu veiculo?");
-            String id = scanner.nextLine();
-            
+        if (!verificarMotorista()) {
+            return;
+        }
+        if (!verificarVeiculo()) { // garante que existe pelo menos um veículo
+            return;
+        }
 
-            System.out.println("\n💺 VAGAS E VALOR");
-            System.out.print("Número de vagas disponíveis: ");
-            int vagas = scanner.nextInt();
-            
-            System.out.print("Valor por pessoa (R$): ");
-            double valor = scanner.nextDouble();
+        System.out.println("\n┌─────────────────────────────────────┐");
+        System.out.println("│        OFERTAR NOVA CARONA          │");
+        System.out.println("└─────────────────────────────────────┘");
 
-            viagemAtual = new Viagem(null, usuarioLogado, cidadeOrigem, cidadeDestino, valor, data, vagas);
-            viagemRepo.addViagem(viagemAtual);
+        System.out.println("\n📍 ORIGEM");
+        System.out.print("Cidade de origem: ");
+        String cidadeOrigem = scanner.nextLine();
 
-            System.out.println("\n✅ Carona ofertada com sucesso!");
-            System.out.println("📋 Resumo:");
-            System.out.println("   De: " + cidadeOrigem + " → Para: " + cidadeDestino);
-            System.out.println("   Data/Hora: " + data );
-            System.out.println("   Vagas: " + vagas + " | Valor: R$ " + String.format("%.2f", valor));
-        }   
+        System.out.println("\n📍 DESTINO");
+        System.out.print("Cidade de destino: ");
+        String cidadeDestino = scanner.nextLine();
+
+        System.out.println("\n🕐 Data");
+        System.out.print("Data da viagem (dd/MM/yyyy): ");
+        String data = scanner.nextLine();
+
+        System.out.println("\n🚗 Selecione o veículo da viagem:");
+        mostrarVeiculos();
+        System.out.print("Informe o ID do veículo: ");
+        int idVeiculo = scanner.nextInt();
+        scanner.nextLine(); // limpa \n
+
+        Veiculo veiculoSelecionado = null;
+        for (Veiculo v : usuarioLogado.getMotorista().getVeiculos()) {
+            if (v.getId() == idVeiculo) {
+                veiculoSelecionado = v;
+                break;
+            }
+        }
+
+        if (veiculoSelecionado == null) {
+            System.out.println("\n❌ Veículo não encontrado. Carona não criada.");
+            pausar();
+            return;
+        }
+
+        System.out.println("\n💺 VAGAS E VALOR");
+        System.out.print("Número de vagas disponíveis: ");
+        int vagas = scanner.nextInt();
+
+        System.out.print("Valor por pessoa (R$): ");
+        double valor = scanner.nextDouble();
+
+        // cria a viagem com o veículo correto
+        viagemAtual = new Viagem(veiculoSelecionado, usuarioLogado, cidadeOrigem, cidadeDestino, valor, data, vagas);
+        viagemRepo.addViagem(viagemAtual);
+
+        System.out.println("\n✅ Carona ofertada com sucesso!");
+        System.out.println("📋 Resumo:");
+        System.out.println("   De: " + cidadeOrigem + " → Para: " + cidadeDestino);
+        System.out.println("   Data: " + data);
+        System.out.println("   Veículo: " + veiculoSelecionado.getMarca() + " "
+                + veiculoSelecionado.getModelo() + " (" + veiculoSelecionado.getAno() + ")");
+        System.out.println("   Vagas: " + vagas + " | Valor: R$ " + String.format("%.2f", valor));
     }
 
     private static void buscarCaronas() {
         System.out.println("\n┌─────────────────────────────────────┐");
         System.out.println("│      BUSCAR CARONAS DISPONÍVEIS     │");
         System.out.println("└─────────────────────────────────────┘");
-        
+        scanner.nextLine(); // limpa \n do menu
+
         System.out.print("Cidade de origem: ");
         String origem = scanner.nextLine();
-        
+
         System.out.print("Cidade de destino: ");
         String destino = scanner.nextLine();
-        
+
         System.out.print("Data (dd/MM/yyyy) [Enter para qualquer data]: ");
         String data = scanner.nextLine();
 
+        List<Viagem> resultados = viagemRepo.ListarViagensPorOrigemDestino(origem, destino, data);
 
         System.out.println("\n📋 CARONAS ENCONTRADAS:");
         System.out.println("─────────────────────────────────────────────────────");
-        for (Viagem v : viagemRepo.ListarViagensPorOrigemDestino(origem, destino, data)) {
-            
-            System.out.println("\n ID: " + v.getId());
-            System.out.println("   De: " + v.getCidadeOrigem() + " Para: " + v.getCidadeDestino());
-            System.out.println("   Motorista: " + v.getMotorista().getNome());
-            System.out.println("   Veículo: \n Marca: %m Modelo: %n Ano: %a Cor: %c"+ v.getVeiculo().getMarca()+ v.getVeiculo().getModelo() + v.getVeiculo().getAno() + v.getVeiculo().getCor());
-            System.out.println("  Saída: " + v.getData());
-            System.out.println("  Vagas: %v disponíveis" + v.getVagas());
-            System.out.printf("  Valor: R$ %.2f por pessoa%n" + v.getPreco());
+
+        if (resultados.isEmpty()) {
+            System.out.println("\nNenhuma carona encontrada para os filtros informados.");
+            pausar();
+            return;
         }
-        
+
+        for (Viagem v : resultados) {
+            System.out.println("\n ID: " + v.getId());
+            System.out.println("   De: " + v.getCidadeOrigem() + " → Para: " + v.getCidadeDestino());
+            System.out.println("   Motorista: " + v.getMotorista().getNome());
+            System.out.println("   Veículo:");
+            System.out.println("      Marca:  " + v.getVeiculo().getMarca());
+            System.out.println("      Modelo: " + v.getVeiculo().getModelo());
+            System.out.println("      Ano:    " + v.getVeiculo().getAno());
+            System.out.println("      Cor:    " + v.getVeiculo().getCor());
+            System.out.println("  Saída: " + v.getData());
+            System.out.println("  Vagas disponíveis: " + v.getVagas());
+            System.out.printf("  Valor: R$ %.2f por pessoa%n", v.getPreco());
+        }
+
         System.out.println("\n─────────────────────────────────────────────────────");
-        System.out.print("\nDeseja reservar alguma carona? (número ou 0 para voltar): ");
+        System.out.print("\nDeseja reservar alguma carona? (ID da viagem ou 0 para voltar): ");
         int escolha = scanner.nextInt();
-        if(verificarPassageiro()){
-            if (escolha > 0) {
+        scanner.nextLine(); // limpa \n
+
+        if (escolha > 0) {
+            if (verificarPassageiro()) {
                 reservarCarona(escolha);
             }
         }
@@ -256,31 +298,37 @@ public class App {
         System.out.println("\n┌─────────────────────────────────────┐");
         System.out.println("│         RESERVAR CARONA             │");
         System.out.println("└─────────────────────────────────────┘");
-        
+
         System.out.print("Quantas pessoas (incluindo você)? ");
         int pessoas = scanner.nextInt();
-        
+
         viagemAtual = viagemRepo.reservarViagemPorId(idViagem, pessoas, usuarioLogado);
-            
+
+        if (viagemAtual == null) {
+            System.out.println("\n❌ Não foi possível reservar a carona (viagem não encontrada ou sem vagas).");
+            return;
+        }
+
         System.out.println("Sua carona para " + viagemAtual.getCidadeDestino() + " foi reservada!");
         System.out.println("O motorista receberá sua solicitação.");
-        System.out.println("Você pode acompanhar em 'Minhas Reservas'");
+        System.out.println("Você pode acompanhar em 'Minhas Reservas'.");
     }
 
     private static void minhasCaronasOfertadas() {
         System.out.println("\n┌─────────────────────────────────────┐");
         System.out.println("│      MINHAS CARONAS OFERTADAS       │");
         System.out.println("└─────────────────────────────────────┘");
+        scanner.nextLine(); 
+
         
         System.out.println("\n📋 Caronas Ativas:");
-
         System.out.println("─────────────────────────────────────────────────────");
         System.out.println("\n1. Florianópolis → Curitiba");
         System.out.println("   🕐 25/11/2024 às 08:00");
         System.out.println("   💺 Vagas: 2/4 ocupadas");
         System.out.println("   💰 R$ 80,00 por pessoa");
         System.out.println("   📊 Status: DISPONÍVEL");
-        
+
         System.out.println("\n─────────────────────────────────────────────────────");
         System.out.println("\nOpções:");
         System.out.println("1. Ver detalhes de uma carona");
@@ -288,12 +336,13 @@ public class App {
         System.out.println("3. Iniciar viagem");
         System.out.println("4. Concluir viagem");
         System.out.println("0. Voltar");
-        
+
         System.out.print("\nEscolha: ");
         int opcao = scanner.nextInt();
-        
+
         if (opcao > 0 && opcao <= 4) {
-            System.out.println("\n✅ Ação realizada com sucesso!");
+            System.out.println("\n Ação realizada com sucesso!");
+            scanner.nextLine();
             pausar();
         }
     }
@@ -302,12 +351,20 @@ public class App {
         System.out.println("\n┌─────────────────────────────────────┐");
         System.out.println("│          MINHAS RESERVAS            │");
         System.out.println("└─────────────────────────────────────┘");
-        
-        System.out.println("\n Reservas:");
+        scanner.nextLine();
 
-        for (Viagem v : usuarioLogado.getPassageiro().getViagens()) {
+        List<Viagem> reservas = viagemRepo.ListarViagensPorPassageiro(usuarioLogado);
+
+        if (reservas.isEmpty()) {
+            System.out.println("\nVocê não possui reservas.");
+            pausar();
+            return;
+        }
+
+        System.out.println("\n Reservas:");
+        for (Viagem v : reservas) {
             System.out.println("─────────────────────────────────────────────────────");
-            System.out.println("\n Id:"+ v.getId());
+            System.out.println("\n Id: " + v.getId());
             System.out.println("De " + v.getCidadeOrigem() + " para " + v.getCidadeDestino());
             System.out.println("  Motorista: " + v.getMotorista().getNome());
             System.out.println("  Data: " + v.getData());
@@ -315,8 +372,9 @@ public class App {
             System.out.println("  Total: R$ " + String.format("%.2f", v.getPreco() * v.getPassageiros().size()));
             System.out.println("  Status: CONFIRMADA");
         }
+
         System.out.println("\n─────────────────────────────────────────────────────");
-        System.out.println("Selecione uma reserva:");
+        System.out.print("Selecione uma reserva (ID da viagem): ");
         int idViagem = scanner.nextInt();
 
         System.out.println("\n─────────────────────────────────────────────────────");
@@ -325,20 +383,21 @@ public class App {
         System.out.println("2. Cancelar reserva");
         System.out.println("3. Avaliar carona (após conclusão)");
         System.out.println("0. Voltar");
-        
+
         System.out.print("\nEscolha: ");
         int opcao = scanner.nextInt();
-        
-        if (opcao == 2) {   
-            System.out.println("Quantas pessoas deseja cancelar?");
+
+        if (opcao == 2) {
+            System.out.print("Quantas pessoas deseja cancelar? ");
             int pessoas = scanner.nextInt();
-            System.out.println("Tem certeza que deseja cancelar esta reserva? (S/N)");
+            scanner.nextLine(); // limpa \n
+            System.out.print("Tem certeza que deseja cancelar esta reserva? (S/N): ");
             String resposta = scanner.nextLine();
-            if (resposta.equalsIgnoreCase("S")) {   
+            if (resposta.equalsIgnoreCase("S")) {
                 viagemRepo.cancelarReserva(idViagem, usuarioLogado, pessoas);
+                System.out.println("\n Reserva cancelada!");
+                pausar();
             }
-            System.out.println("\n Reserva cancelada!");
-            pausar();
         } else if (opcao == 3) {
             avaliarCarona(idViagem);
         }
@@ -348,35 +407,38 @@ public class App {
         System.out.println("\n┌─────────────────────────────────────┐");
         System.out.println("│         AVALIAR CARONA              │");
         System.out.println("└─────────────────────────────────────┘");
-        
-
 
         System.out.print("\nNota de 1 a 5: ");
         int nota = scanner.nextInt();
-        
+
         if (nota < 1 || nota > 5) {
             System.out.println("\n Nota inválida!");
+            scanner.nextLine(); // limpa \n
             pausar();
             return;
         }
-        
 
         System.out.println("\nAvaliação enviada com sucesso!");
         System.out.println(viagemRepo.atualizarAvaliacaoViagem(nota, idViagem));
     }
 
     private static void novoVeiculo() {
-        if(verificarMotorista()){
+        scanner.nextLine(); // limpa \n do menu
+
+        if (verificarMotorista()) {
             System.out.println("\n┌─────────────────────────────────────┐");
             System.out.println("│       CADASTRAR NOVO VEÍCULO        │");
             System.out.println("└─────────────────────────────────────┘");
-            if(verificarVeiculo()){
-                veiculoAcionado = cadastrarVeiculo();
+
+            veiculoAcionado = cadastrarVeiculo();
+
+            if (veiculoAcionado != null) {
+                System.out.println("\n✅ Veículo cadastrado com sucesso!");
+                System.out.println("Veiculo: Cor: " + veiculoAcionado.getCor() + " "
+                        + veiculoAcionado.getMarca() + " " + veiculoAcionado.getModelo()
+                        + " (" + veiculoAcionado.getAno() + ")");
+                System.out.println("📋 Placa: " + veiculoAcionado.getPlaca());
             }
-            
-            System.out.println("\n✅ Veículo cadastrado com sucesso!");
-            System.out.println("Veiculo: Cor:" + veiculoAcionado.getCor() + " " + veiculoAcionado.getMarca() + " " + veiculoAcionado.getModelo() + " (" + veiculoAcionado.getAno() + ")");
-            System.out.println("📋 Placa: " + veiculoAcionado.getPlaca());
         }
     }
 
@@ -384,102 +446,113 @@ public class App {
         System.out.println("\n┌─────────────────────────────────────┐");
         System.out.println("│          MEUS VEÍCULOS              │");
         System.out.println("└─────────────────────────────────────┘");
-        
+        scanner.nextLine(); // limpa \n do menu
 
+        if (usuarioLogado.getMotorista() == null ||
+                usuarioLogado.getMotorista().getVeiculos().isEmpty()) {
+            System.out.println("\nVocê não possui veículos cadastrados.");
+            pausar();
+            return;
+        }
 
         System.out.println("\n🚗 Veículos Cadastrados:");
         System.out.println("─────────────────────────────────────────────────────");
-        
+
         mostrarVeiculos();
         pausar();
-        
     }
-    private static void mostrarVeiculos(){
 
-        for(Veiculo veiculo : usuarioLogado.getMotorista().getVeiculos()){
-            System.out.println("\nID: " + veiculo.getId() );
+    private static void mostrarVeiculos() {
+        for (Veiculo veiculo : usuarioLogado.getMotorista().getVeiculos()) {
+            System.out.println("\nID: " + veiculo.getId());
             System.out.println("Marca: " + veiculo.getMarca());
             System.out.println("Modelo: " + veiculo.getModelo());
-            System.out.println("Ano: "+ veiculo.getAno());
+            System.out.println("Ano: " + veiculo.getAno());
             System.out.println("Cor: " + veiculo.getCor());
             System.out.println("Placa: " + veiculo.getPlaca());
             System.out.println("\n═════════════════════════════════════════════════════");
         }
     }
+
     private static void meuPerfil() {
         System.out.println("\n┌─────────────────────────────────────┐");
         System.out.println("│            MEU PERFIL               │");
         System.out.println("└─────────────────────────────────────┘");
-        
-        System.out.println("\nUsuario: " + usuarioLogado.getNome());
+
+        System.out.println("\nUsuário: " + usuarioLogado.getNome());
         System.out.println("Email: " + usuarioLogado.getEmail());
         System.out.println("Telefone: " + usuarioLogado.getTelefone());
-        System.out.println(" Avaliação: $ (& avaliações)");
+        System.out.println(" Avaliação: (implementação pendente)");
         System.out.println("\n Estatísticas:");
-        System.out.println(" Caronas oferecidas: " );
-        System.out.println(" Caronas como passageiro: ");
-        System.out.println(" Caronas concluídas:");
-        
+        System.out.println(" Caronas oferecidas: (implementação pendente)");
+        System.out.println(" Caronas como passageiro: (implementação pendente)");
+        System.out.println(" Caronas concluídas: (implementação pendente)");
     }
-
 
     private static void historicoCaronas() {
         System.out.println("\n┌─────────────────────────────────────┐");
         System.out.println("│       HISTÓRICO DE CARONAS          │");
         System.out.println("└─────────────────────────────────────┘");
-        
+
         System.out.println("─────────────────────────────────────────────────────");
-        
+
         System.out.println("\n 15/11/2024 - Florianópolis → Curitiba");
         System.out.println("   Tipo: Motorista | Status: CONCLUÍDA");
         System.out.println("   Passageiros: 3 | Ganhos: R$ 240,00");
-        
-        
+
         System.out.println("\n 05/11/2024 - Rio → Petrópolis");
         System.out.println("   Tipo: Motorista | Status: CANCELADA");
-        
     }
 
     private static void relatorioCompleto() {
         System.out.println("\n┌─────────────────────────────────────┐");
         System.out.println("│        RELATÓRIO COMPLETO           │");
         System.out.println("└─────────────────────────────────────┘");
-        
+        scanner.nextLine();
+
         System.out.println("\n📊 RESUMO GERAL - " + usuarioLogado.getNome());
         System.out.println("═════════════════════════════════════════════════════");
         
-        System.out.println("\n🚗 COMO MOTORISTA:");
-        System.out.println("   Total de caronas oferecidas: 15");
-        System.out.println("   Caronas concluídas: 12");
-        System.out.println("   Caronas canceladas: 3");
-        System.out.println("   Total de passageiros transportados: 38");
-        System.out.println("   Receita total: R$ 1.850,00");
-        System.out.println("   Avaliação média: ⭐ 4.8");
+        if (!(usuarioLogado.getMotorista() == null)) {
+            System.out.println("\n🚗 COMO MOTORISTA:");
+            System.out.printf("   Total de caronas oferecidas: %d", usuarioLogado.getMotorista().getNumeroDeViagens());
+            int contagemViagens;
+            contagemViagens = listarViagemMotorista("CONCLUIDA");
+            System.out.printf("   Caronas concluídas: " + contagemViagens);
+
+            contagemViagens = listarViagemMotorista("CANCELADA");
+            System.out.println("   Caronas canceladas: " + contagemViagens);
+
+            contagemViagens = viagemRepo.contarPassageirosPorMotorista(usuarioLogado);
+            System.out.println("   Total de passageiros transportados: " + contagemViagens);
+            double receitaTotal = viagemRepo.calcularReceitaTotalPorMotorista(usuarioLogado);
+            System.out.println("   Receita total: R$ " + receitaTotal);
+        }
         
+        if(!(usuarioLogado.getPassageiro() == null)) {
         System.out.println("\n💺 COMO PASSAGEIRO:");
         System.out.println("   Total de caronas: 8");
         System.out.println("   Caronas concluídas: 7");
         System.out.println("   Caronas canceladas: 1");
         System.out.println("   Total gasto: R$ 420,00");
         System.out.println("   Avaliação média: ⭐ 4.6");
-        
+        }
         System.out.println("\n🎯 DESTINOS MAIS FREQUENTES:");
         System.out.println("   1. Curitiba (5 viagens)");
         System.out.println("   2. São Paulo (4 viagens)");
         System.out.println("   3. Rio de Janeiro (3 viagens)");
-        
+
         System.out.println("\n💰 ECONOMIA/GANHOS:");
         System.out.println("   Economia em combustível: R$ 630,00");
         System.out.println("   Balanço final: +R$ 1.430,00");
-        
+
         System.out.println("\n═════════════════════════════════════════════════════");
         System.out.print("\nDeseja exportar este relatório? (S/N): ");
-        String exportar = scanner.nextLine().toUpperCase();
-        
+        String exportar = scanner.nextLine().trim().toUpperCase();
+
         if (exportar.equals("S")) {
             System.out.println("\n✅ Relatório exportado para: relatorio_" + usuarioLogado.getNome() + ".txt");
         }
-        
     }
 
     private static void buscarCaronasVisitante() {
@@ -487,25 +560,22 @@ public class App {
         System.out.println("│     BUSCAR CARONAS (VISITANTE)      │");
         System.out.println("└─────────────────────────────────────┘");
         System.out.println("\n Faça login ou crie uma conta para reservar caronas!");
-        
+        scanner.nextLine();
+
         System.out.print("\nCidade de origem: ");
         String origem = scanner.nextLine();
-        
+
         System.out.print("Cidade de destino: ");
         String destino = scanner.nextLine();
-        
+
         System.out.println("\n CARONAS DISPONÍVEIS:");
         System.out.println("─────────────────────────────────────────────────────");
         System.out.println("\nEncontramos 5 caronas de " + origem + " para " + destino);
         System.out.println("\n🔒 Crie uma conta para ver detalhes e reservar!");
-        
     }
-
-
 
     private static void pausar() {
         System.out.print("\nPressione ENTER para continuar...");
-        scanner.nextLine();
         scanner.nextLine();
     }
 
@@ -516,70 +586,96 @@ public class App {
         System.exit(0);
     }
 
-    private static boolean verificarMotorista(){
-        System.out.println("\n❌ Apenas motoristas podem ofertar caronas!");
-        scanner.nextLine();
-        System.out.println("Gostaria de se cadastrar como motorista para oferecer caronas? (S/N)");
+    private static boolean verificarMotorista() {
+        if (usuarioLogado.getMotorista() != null) {
+            return true;
+        }
+
+        System.out.println("\n Apenas motoristas podem ofertar caronas!");
+        System.out.print("Gostaria de se cadastrar como motorista para oferecer caronas? (S/N): ");
         String resposta = scanner.nextLine();
-        if (resposta.equalsIgnoreCase("S")){
-            System.out.println("Por favor, forneça sua CNH para completar o cadastro:");
+
+        if (resposta.equalsIgnoreCase("S")) {
+            System.out.print("Por favor, forneça sua CNH para completar o cadastro: ");
             String cnh = scanner.nextLine();
             usuarioLogado.setMotorista(cnh);
-            if(usuarioLogado.getMotorista() != null){
-                System.out.println("\n Cadastro como motorista realizado com sucesso!");
-                return true;
-            } 
-        }
-        return false;
-    }
-    private static boolean verificarPassageiro(){
-        System.out.println("\nApenas passageiros podem reservar caronas!");
-        scanner.nextLine();
-        System.out.println("Gostaria de se cadastrar como passageiro para oferecer caronas? (S/N)");
-        String resposta = scanner.nextLine();
-        if (resposta.equalsIgnoreCase("S")){
-            usuarioLogado.setPassageiro();;
-            if(usuarioLogado.getPassageiro() != null){
-                System.out.println("\n Cadastro como motorista realizado com sucesso!");
+
+            if (usuarioLogado.getMotorista() != null) {
+                System.out.println("\n✅ Cadastro como motorista realizado com sucesso!");
                 return true;
             }
         }
         return false;
     }
-    public static boolean verificarVeiculo(){
-        System.out.println("\nVocê não tem num um veiculo cadastrado! ");
-        scanner.nextLine();
-        System.out.println("Gostaria de cadastrar um veiculo? (S/N)");
-        String resposta = scanner.nextLine();
-        if (resposta.equalsIgnoreCase("S")){
-           veiculoAcionado = cadastrarVeiculo();
-        }
-        if (veiculoAcionado != null){
+
+    private static boolean verificarPassageiro() {
+        if (usuarioLogado.getPassageiro() != null) {
             return true;
+        }
+
+        System.out.println("\n Apenas passageiros podem reservar caronas!");
+        System.out.print("Gostaria de se cadastrar como passageiro para utilizar caronas? (S/N): ");
+        String resposta = scanner.nextLine();
+
+        if (resposta.equalsIgnoreCase("S")) {
+            usuarioLogado.setPassageiro();
+            if (usuarioLogado.getPassageiro() != null) {
+                System.out.println("\n Cadastro como passageiro realizado com sucesso!");
+                return true;
+            }
         }
         return false;
     }
-    public static Veiculo cadastrarVeiculo(){
-        
-            System.out.print("Marca: ");
-            String marca = scanner.nextLine();
-            
-            System.out.print("Modelo: ");
-            String modelo = scanner.nextLine();
-            
-            System.out.print("Ano: ");
-            int ano = scanner.nextInt();
-            
-            System.out.print("Cor: ");
-            String cor = scanner.nextLine();
-            
-            System.out.print("Placa (ABC1234): ");
-            String placa = scanner.nextLine().toUpperCase();
 
-            veiculoAcionado = new Veiculo(marca, modelo, placa, ano, cor);
+    public static boolean verificarVeiculo() {
+        if (verificarMotorista()) {
+            return true;
+        }if (!usuarioLogado.getMotorista().getVeiculos().isEmpty()) {
+            return true;
+        }
 
-            usuarioLogado.getMotorista().addVeiculo(veiculoAcionado);
+        scanner.nextLine();
+        System.out.println("\nVocê ainda não tem nenhum veículo cadastrado!");
+        System.out.print("Gostaria de cadastrar um veículo agora? (S/N): ");
+        String resposta = scanner.nextLine();
 
-            return veiculoAcionado;
+        if (resposta.equalsIgnoreCase("S")) {
+            veiculoAcionado = cadastrarVeiculo();
+            return veiculoAcionado != null;
+        }
+        return false;
+    }
+
+    public static Veiculo cadastrarVeiculo() {
+        System.out.print("Marca: ");
+        String marca = scanner.nextLine();
+
+        System.out.print("Modelo: ");
+        String modelo = scanner.nextLine();
+
+        System.out.print("Ano: ");
+        int ano = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.print("Cor: ");
+        String cor = scanner.nextLine();
+
+        System.out.print("Placa (ABC1234): ");
+        String placa = scanner.nextLine().toUpperCase();
+
+        veiculoAcionado = new Veiculo(marca, modelo, placa, ano, cor);
+
+        usuarioLogado.getMotorista().addVeiculo(veiculoAcionado);
+
+        return veiculoAcionado;
+    }
+    public static int  listarViagemMotorista(String status) {
+        int contagemViagens = 0;
+        for(Viagem v : viagemRepo.ListarViagensPorMotorista(usuarioLogado)) {
+            if(v.getStatus().equals(status)) {
+                contagemViagens++;
+            }
+        }
+        return contagemViagens;
     }
 }
