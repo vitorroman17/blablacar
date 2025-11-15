@@ -1,6 +1,7 @@
 package domain.entities;
 
 public class Veiculo {
+    
     private static int proximoId = 1;
 
     private int id = 0;

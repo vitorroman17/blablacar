@@ -9,14 +9,12 @@ import java.util.List;
 public class ViagemRepository {
 
     private final List<Viagem> viagens = new ArrayList<>();
-    List<Viagem> viagensFiltradas= null;
 
     public void addViagem(Viagem viagem) {
         viagens.add(viagem);
     }
 
-    
-    public List<Viagem> ListarViagens() {
+    public List<Viagem> listarViagens() {
         return viagens;
     }
 
@@ -28,8 +26,8 @@ public class ViagemRepository {
         }
         return null;
     }
-    
-    public List<Viagem> ListarViagensPorOrigemDestinoData(String origem, String destino, String data) {
+
+    public List<Viagem> listarViagensPorOrigemDestinoData(String origem, String destino, String data) {
         List<Viagem> viagensFiltradas = new ArrayList<>();
         for (Viagem viagem : viagens) {
             if (viagem.getCidadeOrigem().equalsIgnoreCase(origem)
@@ -40,7 +38,8 @@ public class ViagemRepository {
         }
         return viagensFiltradas;
     }
-    public List<Viagem> ListarViagensPorOrigemDestino(String origem, String destino) {
+
+    public List<Viagem> listarViagensPorOrigemDestino(String origem, String destino) {
         List<Viagem> viagensFiltradas = new ArrayList<>();
         for (Viagem viagem : viagens) {
             if (viagem.getCidadeOrigem().equalsIgnoreCase(origem)
@@ -50,7 +49,7 @@ public class ViagemRepository {
         }
         return viagensFiltradas;
     }
-    
+
     public Viagem reservarViagemPorId(int id, int pessoas, Usuario passageiro) {
         for (Viagem viagem : viagens) {
             if (viagem.getId() == id) {
@@ -61,16 +60,16 @@ public class ViagemRepository {
         return null;
     }
 
-    public double atualizarAvaliacaoViagem(double  nota, int idViagem) {
+    public double atualizarAvaliacaoViagem(double nota, int idViagem) {
         for (Viagem viagem : viagens) {
             if (viagem.getId() == idViagem) {
                 viagem.avaliar(nota);
                 return viagem.getAvaliacao();
             }
         }
-        return nota; 
+        return nota;
     }
-    
+
     public boolean cancelarReserva(int idViagem, Usuario passageiro, int pessoas) {
         for (Viagem viagem : viagens) {
             if (viagem.getId() == idViagem) {
@@ -80,9 +79,9 @@ public class ViagemRepository {
         }
         return false;
     }
-    
-    public List<Viagem> ListarViagensPorPassageiro(Usuario passageiro) {
 
+    public List<Viagem> listarViagensPorPassageiro(Usuario passageiro) {
+        List<Viagem> viagensFiltradas = new ArrayList<>(); 
         for (Viagem viagem : viagens) {
             for (PassageiroViagem pv : viagem.getPassageiros()) {
                 if (pv.getPassageiro().equals(passageiro)) {
@@ -94,8 +93,7 @@ public class ViagemRepository {
         return viagensFiltradas;
     }
 
-
-    public List<Viagem> ListarViagensPorMotorista(Usuario motorista) {
+    public List<Viagem> listarViagensPorMotorista(Usuario motorista) {
         List<Viagem> viagensFiltradas = new ArrayList<>();
         for (Viagem viagem : viagens) {
             if (viagem.getMotorista().equals(motorista)) {
@@ -104,10 +102,10 @@ public class ViagemRepository {
         }
         return viagensFiltradas;
     }
-    
+
     public int contarPassageirosPorMotorista(Usuario motorista) {
         int totalPassageiros = 0;
-       for (Viagem viagem : viagens) {
+        for (Viagem viagem : viagens) {
             if (viagem.getMotorista().equals(motorista)) {
                 for (PassageiroViagem pv : viagem.getPassageiros()) {
                     if (pv.getStatus() == "CONCLUIDO") {
@@ -118,13 +116,28 @@ public class ViagemRepository {
         }
         return totalPassageiros;
     }
+
     public double calcularReceitaTotalPorMotorista(Usuario motorista) {
         double receitaTotal = 0.0;
         for (Viagem viagem : viagens) {
             if (viagem.getMotorista().equals(motorista)) {
-                receitaTotal += viagem.getPreco() * viagem.getPassageiros().size();
+                for (PassageiroViagem pv : viagem.getPassageiros()) {
+                    if (pv.getStatus() == "CONCLUIDO") {
+                        receitaTotal += viagem.getPreco() * pv.getNumeroDeLugares();
+                    }
+                }
             }
         }
         return receitaTotal;
-    }    
+    }
+
+    public void aumentarLugaresDisponiveis(Usuario passageiro) {
+        for (Viagem viagem : viagens) {
+            for (PassageiroViagem pv : viagem.getPassageiros()) {
+                if (pv.getPassageiro().equals(passageiro)) {
+                    viagem.aumentarLugaresDisponiveis(pv.getNumeroDeLugares());
+                }
+            }
+        }
+    }
 }

@@ -125,5 +125,9 @@ public class Viagem {
     public int getVagas() {
         return vagas - getTotalPessoas();
     }
+    
+    public void aumentarLugaresDisponiveis(int lugares) {
+        this.lugaresOcupados -= lugares;
+    }
 
 }

@@ -17,6 +17,8 @@ public class App {
     private static final UsuarioRepository usuarioRepo = new UsuarioRepository();
     private static final ViagemRepository viagemRepo = new ViagemRepository();
     private static List<Viagem> resultados = null;
+    private static Veiculo veiculoSelecionado = null;
+
 
     public static void main(String[] args) {
 
@@ -208,7 +210,6 @@ public class App {
         int idVeiculo = scanner.nextInt();
         scanner.nextLine(); 
 
-        Veiculo veiculoSelecionado = null;
         for (Veiculo v : usuarioLogado.getMotorista().getVeiculos()) {
             if (v.getId() == idVeiculo) {
                 veiculoSelecionado = v;
@@ -256,9 +257,9 @@ public class App {
         System.out.print("Data (dd/MM/yyyy) [Enter para qualquer data]: ");
         String data = scanner.nextLine();   
         if(data.isEmpty()) {
-            resultados = viagemRepo.ListarViagensPorOrigemDestino(origem, destino);
+            resultados = viagemRepo.listarViagensPorOrigemDestino(origem, destino);
         }else {
-            resultados = viagemRepo.ListarViagensPorOrigemDestinoData(origem, destino, data);
+            resultados = viagemRepo.listarViagensPorOrigemDestinoData(origem, destino, data);
         }
 
         System.out.println("\n  CARONAS ENCONTRADAS:");
@@ -327,7 +328,7 @@ public class App {
         
         System.out.println("\n  Caronas Ativas:");
         System.out.println("─────────────────────────────────────────────────────");
-        for (Viagem v : viagemRepo.ListarViagensPorMotorista(usuarioLogado)) {
+        for (Viagem v : viagemRepo.listarViagensPorMotorista(usuarioLogado)) {
             if (v.getStatus() == "PENDENTE") {
                 System.out.println("\n ID: " + v.getId());
                 System.out.println(" De " + v.getCidadeOrigem() + " para " + v.getCidadeDestino());
@@ -347,7 +348,7 @@ public class App {
             return;
         }
         System.out.println("\nOpções:");
-        System.out.println("2. Cancelar uma carona");
+        System.out.println("2. Alterar lugares da carona");
         System.out.println("3. Iniciar viagem");
         System.out.println("4. Concluir viagem");
         System.out.println("0. Voltar");
@@ -357,14 +358,18 @@ public class App {
 
         switch (opcao) {
             case 2 -> {
-                System.out.print("Tem certeza que deseja cancelar esta carona? (S/N): ");
                 scanner.nextLine();
-                String resposta = scanner.nextLine();
-                if (resposta.equalsIgnoreCase("S")) {
-                    viagemSelecionada.alterarStatus("CANCELADA");
-                    System.out.println("\n Carona cancelada!");
+                System.out.print("Quantos lugares deseja liberar? ");
+                int lugares = scanner.nextInt();
+                if (viagemSelecionada.getVagas() + lugares > viagemSelecionada.getVagas()) {
+                    System.out.println("\n Não é possível liberar mais lugares do que o total disponível.");
                     pausar();
+                    return;
+                    
                 }
+                viagemSelecionada.aumentarLugaresDisponiveis(lugares);
+                System.out.println("\n Carona cancelada!");
+                pausar();
             }
             case 3 -> {
                 viagemSelecionada.alterarStatus("EM ANDAMENTO");
@@ -388,7 +393,7 @@ public class App {
         System.out.println("\t└─────────────────────────────────────┘");
         scanner.nextLine();
 
-        List<Viagem> reservas = viagemRepo.ListarViagensPorPassageiro(usuarioLogado);
+        List<Viagem> reservas = viagemRepo.listarViagensPorPassageiro(usuarioLogado);
 
         if (reservas.isEmpty()) {
             System.out.println("\nVocê não possui reservas.");
@@ -403,8 +408,8 @@ public class App {
             System.out.println("De " + v.getCidadeOrigem() + " para " + v.getCidadeDestino());
             System.out.println("  Motorista: " + v.getMotorista().getNome());
             System.out.println("  Data: " + v.getData());
-            System.out.println("  Pessoas reservadas: " + v.getPassageiros().size());
-            System.out.println("  Total: R$ " + String.format("%.2f", v.getPreco() * v.getPassageiros().size()));
+            System.out.println("  Pessoas reservadas: " + v.getTotalPessoasDoPassageiro(usuarioLogado));
+            System.out.println("  Total: R$ " + String.format("%.2f", v.getPreco() * v.getTotalPessoasDoPassageiro(usuarioLogado)));
             System.out.println("  Status: CONFIRMADA");
         }
 
@@ -467,10 +472,12 @@ public class App {
 
             if (veiculoAcionado != null) {
                 System.out.println("\n  Veículo cadastrado com sucesso!");
-                System.out.println("Veiculo: Cor: " + veiculoAcionado.getCor() + " "
-                        + veiculoAcionado.getMarca() + " " + veiculoAcionado.getModelo()
-                        + " (" + veiculoAcionado.getAno() + ")");
-                System.out.println("📋 Placa: " + veiculoAcionado.getPlaca());
+                System.out.println("ID: " + veiculoAcionado.getId());
+                System.out.println("Marca: " + veiculoAcionado.getMarca());
+                System.out.println("Modelo: " + veiculoAcionado.getModelo());
+                System.out.println("Ano: " + veiculoAcionado.getAno());
+                System.out.println("Cor: " + veiculoAcionado.getCor());
+                System.out.println("Placa: " + veiculoAcionado.getPlaca());
             }
         }
     }
@@ -604,7 +611,7 @@ public class App {
 
     private static void sair() {
         System.out.println("\n\t╔═══════════════════════════════════════════════════╗");
-        System.out.println("\t║        Obrigado por usar o CaronaApp! 🚗         ║");
+        System.out.println("\t║        Obrigado por usar o CaronaApp!             ║");
         System.out.println("\t╚═══════════════════════════════════════════════════╝\n");
         System.exit(0);
     }
@@ -670,7 +677,7 @@ public class App {
     }
 
     public static Veiculo cadastrarVeiculo() {
-        scanner.nextLine();
+        scanner.nextLine(); 
 
         System.out.print("Marca: ");
         String marca = scanner.nextLine();
@@ -680,6 +687,7 @@ public class App {
 
         System.out.print("Ano: ");
         int ano = scanner.nextInt();
+        scanner.nextLine();
 
         System.out.print("Cor: ");
         String cor = scanner.nextLine();
@@ -691,11 +699,11 @@ public class App {
 
         usuarioLogado.getMotorista().addVeiculo(veiculoAcionado);
 
-        return veiculoAcionado;
+    return veiculoAcionado;
     }
     public static int  listarViagemMotorista(String status) {
         int contagemViagens = 0;
-        for(Viagem v : viagemRepo.ListarViagensPorMotorista(usuarioLogado)) {
+        for(Viagem v : viagemRepo.listarViagensPorMotorista(usuarioLogado)) {
             if(v.getStatus().equals(status)) {
                 contagemViagens++;
             }
@@ -704,7 +712,7 @@ public class App {
     }
     public static int listarViagemPassageiro(String status) {
         int contagemViagens = 0;
-        for(Viagem v : viagemRepo.ListarViagensPorPassageiro(usuarioLogado)) {
+        for(Viagem v : viagemRepo.listarViagensPorPassageiro(usuarioLogado)) {
             if(v.getStatus().equals(status)) {
                 contagemViagens++;
             }

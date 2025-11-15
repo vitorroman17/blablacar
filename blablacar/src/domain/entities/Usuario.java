@@ -6,8 +6,8 @@ public class Usuario {
     private String senha;
     private String telefone;
     private String endereco;
-    Passageiro passageiro;
-    Motorista motorista;
+    private Passageiro passageiro;
+    private Motorista motorista;
 
 
     public Usuario(String nome, String email, String senha, String telefone, String endereco) {
