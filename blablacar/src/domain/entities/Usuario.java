@@ -18,6 +18,7 @@ public class Usuario {
         this.senha = senha;
         this.telefone = telefone;
         this.endereco = endereco;
+        this.id = proximoId++;
     }
 
     public String getNome() {
@@ -65,5 +66,8 @@ public class Usuario {
     }
     public void setPassageiro() {
         passageiro = new Passageiro();
+    }
+    public int getId() {
+        return id;
     }
 }
